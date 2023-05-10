@@ -1,44 +1,31 @@
-import { useState, useEffect } from 'react'
-import api from '../utils/api'
+import React from 'react'
 import Card from './Card'
+import { CurrentUserContext } from '../contexts/CurrentUserContext.js';
 
-function Main({ onEditProfile, onAddPlace, onEditAvatar, onCardClick }) {
-  const [cards, setuCards] = useState([])
-  const [userInfo, setUserInfo] = useState({
-    avatar: null,
-    name: null,
-    about: null
-  })
-
-  useEffect(() => {
-    Promise.all([api.getUserInfo(), api.getInitialCards()])
-      .then(([userData, initialCards]) => {
-        setUserInfo(userData)
-        setuCards(initialCards)
-      })
-      .catch((err) => {
-        console.log(`Ошибка: ${err}`)
-      })
-  }, [])
-
+function Main({ onEditProfile, onAddPlace, onEditAvatar, onCardClick, cards, onCardLike, onCardDelete }) {
+  const currentUser = React.useContext(CurrentUserContext);
   return (
     <main>
       <section className="profile">
         <div className="profile__card">
           <div className="profile__avatar" onClick={onEditAvatar}
-            style={{ backgroundImage: `url(${userInfo.avatar})` }}>
+            style={{ backgroundImage: `url(${currentUser.avatar})` }}>
           </div>
           <div className="profile__info">
-            <h1 className="profile__name">{userInfo.name}</h1>
+            <h1 className="profile__name">{currentUser.name}</h1>
             <button type="button" className="profile__edit" onClick={onEditProfile}></button>
-            <p className="profile__about">{userInfo.about}</p>
+            <p className="profile__about">{currentUser.about}</p>
           </div>
         </div>
         <button type="button" className="profile__add" onClick={onAddPlace}></button>
       </section>
       <section className="grid-zona">
         {cards.map((card) => 
-          <Card key={card._id} cardData={card} onCardClick={onCardClick} />
+          <Card key={card._id}
+          cardData={card}
+          onCardClick={onCardClick}
+          onCardLike={onCardLike}
+          onCardDelete={onCardDelete} />
         )}
       </section>
     </main>

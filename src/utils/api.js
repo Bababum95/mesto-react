@@ -57,16 +57,16 @@ class Api {
         })
     }
 
-    togleLike(cardId, set) {
+    togleLike(cardId, isLiked) {
+        this.method = isLiked? "PUT" : "DELETE" 
         return fetch(`${this._baseUrl}/cards/${cardId}/likes`, {
-            method: set,
+            method: this.method,
             headers: this._token,
         })
         .then(res => {
             return this._getResponseData(res)
         })
     }
-
     changeAvatar(formData) {
         return fetch(`${this._baseUrl}/users/me/avatar`, {
             method: 'PATCH',
