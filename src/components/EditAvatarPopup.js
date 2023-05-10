@@ -1,16 +1,18 @@
-import { createRef } from 'react'
+import { createRef, useEffect } from 'react'
 import PopupWithForm from './PopupWithForm'
 
 function EditProfilePopup({ isOpen, onClose, onUpdateAvatar }) {
-    let avatarInput = createRef();
+    const avatarInput = createRef();
 
     function handleSubmit(e) {
         e.preventDefault();
         onUpdateAvatar({
             avatar: avatarInput.current.value
         });
-        avatarInput.current.value = '';
     }
+    useEffect(() => {
+        avatarInput.current.value = '';
+    }, [isOpen]);
 
     return (
         <PopupWithForm name="change-avatar" title="Обновить аватар" button="Сохранить"
@@ -20,7 +22,7 @@ function EditProfilePopup({ isOpen, onClose, onUpdateAvatar }) {
                     placeholder="Ссылка на картинку"
                     defaultValue=""
                     ref={avatarInput}
-                    />
+                />
                 <span className="popup__item-error avatar-error"></span>
             </div>
         </PopupWithForm>

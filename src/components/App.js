@@ -45,7 +45,10 @@ function App() {
     api.togleLike(card._id, !isLiked)
       .then((newCard) => {
         setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
-      });
+      })
+      .catch((err) => {
+        console.log(`Ошибка: ${err}`)
+      })
   }
 
   function handleUpdateUser(formData) {
@@ -84,7 +87,10 @@ function App() {
     api.deleteCard(cardId)
       .then(() => {
         setCards((state) => state.filter((c) => c._id !== cardId));
-      });
+      })
+      .catch((err) => {
+        console.log(`Ошибка: ${err}`)
+      })
   }
 
   return (

@@ -13,7 +13,7 @@ function EditProfilePopup({ isOpen, onClose, onUpdateUser }) {
       name: currentUser.name,
       about: currentUser.about
     })
-  }, [currentUser]);
+  }, [currentUser, isOpen]);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -24,7 +24,7 @@ function EditProfilePopup({ isOpen, onClose, onUpdateUser }) {
     <PopupWithForm name="edit" title="Редактировать профиль" button="Сохранить"
       isOpen={isOpen} onClose={onClose} onSubmit={handleSubmit}>
       <div className="popup__wraper">
-        <input type="text" name="name" value={userInfo.name}
+        <input type="text" name="name" value={userInfo.name || ''}
           required className="popup__item popup__name"
           minLength="2" maxLength="40" placeholder="Имя"
           onChange={e => setuserInfo(prev => ({
@@ -33,7 +33,7 @@ function EditProfilePopup({ isOpen, onClose, onUpdateUser }) {
         <span className="popup__item-error name-error"></span>
       </div>
       <div className="popup__wraper">
-        <input type="text" name="about" value={userInfo.about}
+        <input type="text" name="about" value={userInfo.about || ''}
           required className="popup__item popup__about"
           minLength="2" maxLength="200" placeholder="О себе"
           onChange={e => setuserInfo(prev => ({

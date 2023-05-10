@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import PopupWithForm from './PopupWithForm'
 
 const clearValue = {
-    name: null,
-    link: null
+    name: '',
+    link: ''
 }
 
 function AddPlacePopup({ isOpen, onClose, onAddPlaceSubmit }) {
@@ -13,6 +13,9 @@ function AddPlacePopup({ isOpen, onClose, onAddPlaceSubmit }) {
         onAddPlaceSubmit(card)
         setCard(clearValue)
     }
+    useEffect(() => {
+        setCard(clearValue)
+      }, [isOpen]);
 
     return (
         <PopupWithForm name="new-place" title="Новое место" button="Сохранить"
