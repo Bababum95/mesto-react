@@ -1,35 +1,81 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import { CurrentUserContext } from '../contexts/CurrentUserContext.js';
-import api from '../utils/api'
-import Header from './Header'
-import Main from './Main'
-import Footer from './Footer'
-import PopupWithForm from './PopupWithForm'
-import EditProfilePopup from './EditProfilePopup'
-import EditAvatarPopup from './EditAvatarPopup'
-import AddPlacePopup from './AddPlacePopup'
-import ImagePopup from './ImagePopup'
+import { checkToken, authorize } from '../utils/auth'
+import ProtectedRouteElement from './ProtectedRoute.js';
+import api from '../utils/api';
+import Header from './Header';
+import Main from './Main';
+import Footer from './Footer';
+import Login from './Login.js';
+import Register from './Register.js';
+import PopupWithForm from './PopupWithForm';
+import EditProfilePopup from './EditProfilePopup';
+import EditAvatarPopup from './EditAvatarPopup';
+import AddPlacePopup from './AddPlacePopup';
+import ImagePopup from './ImagePopup';
+import InfoTooltip from './InfoTooltip';
 
 
 function App() {
-  const [isEditProfilePopupOpen, setEditProfilePopupOpen] = useState(false)
-  const [isAddPlacePopupOpen, setAddPlacePopupOpen] = useState(false)
-  const [isEditAvatarPopupOpen, setEditAvatarPopupOpen] = useState(false)
-  const [selectedCard, setSelectedCard] = useState({})
-  const [cards, setCards] = useState([])
+  const navigate = useNavigate();
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [isEditProfilePopupOpen, setEditProfilePopupOpen] = useState(false);
+  const [isAddPlacePopupOpen, setAddPlacePopupOpen] = useState(false);
+  const [isEditAvatarPopupOpen, setEditAvatarPopupOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState({});
+  const [info, setInfo] = useState(null);
+  const [cards, setCards] = useState([]);
+  const [email, setEmail] = useState(null)
   const [currentUser, setCurrentUser] = useState({
     avatar: null,
     name: null,
     about: null
-  })
+  });
+  const handleTokenCheck = () => {
+    if (localStorage.getItem('token')) {
+      const token = localStorage.getItem('token');
+      checkToken(token).then((res) => {
+        if (res) {
+          setLoggedIn(true);
+          setEmail(res.data.email)
+          navigate("/", { replace: true })
+        }
+      });
+    }
+  };
+  const handleLogin = (e, formValue) => {
+    e.preventDefault();
+    if (!formValue.email || !formValue.password) {
+      return;
+    }
+    authorize(formValue)
+      .then((response => response.json()))
+      .then((data) => {
+        try {
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+            setLoggedIn(true);
+            setEmail(formValue.email)
+            navigate('/', { replace: true });
+          } else {
+            setInfo('Что-то пошло не так!Попробуйте ещё раз.')
+          }
+        } catch (err) {
+          console.log(err)
+        }
+      })
+  };
   const closeAllPopups = () => {
     setEditProfilePopupOpen(false)
     setAddPlacePopupOpen(false)
     setEditAvatarPopupOpen(false)
+    setInfo(null)
     setSelectedCard({})
-  }
+  };
 
   useEffect(() => {
+    handleTokenCheck();
     Promise.all([api.getUserInfo(), api.getInitialCards()])
       .then(([userData, initialCards]) => {
         setCurrentUser(userData)
@@ -38,7 +84,7 @@ function App() {
       .catch((err) => {
         console.log(`Ошибка: ${err}`)
       })
-  }, [])
+  }, []);
 
   function handleCardLike(card) {
     const isLiked = card.likes.some(i => i._id === currentUser._id);
@@ -49,8 +95,7 @@ function App() {
       .catch((err) => {
         console.log(`Ошибка: ${err}`)
       })
-  }
-
+  };
   function handleUpdateUser(formData) {
     api.editUserInfo(formData)
       .then((userData) => {
@@ -60,7 +105,7 @@ function App() {
       .catch((err) => {
         console.log(`Ошибка: ${err}`)
       })
-  }
+  };
   function handleUpdateAvatar(avatar) {
     api.changeAvatar(avatar)
       .then((userData) => {
@@ -70,8 +115,7 @@ function App() {
       .catch((err) => {
         console.log(`Ошибка: ${err}`)
       })
-  }
-
+  };
   function handleAddPlaceSubmit(formData) {
     api.addCard(formData)
       .then((newCard) => {
@@ -81,8 +125,7 @@ function App() {
       .catch((err) => {
         console.log(`Ошибка: ${err}`)
       })
-  }
-
+  };
   function handleCardDelete(cardId) {
     api.deleteCard(cardId)
       .then(() => {
@@ -91,30 +134,35 @@ function App() {
       .catch((err) => {
         console.log(`Ошибка: ${err}`)
       })
-  }
-
+  };
   return (
-    <>
-      <CurrentUserContext.Provider value={currentUser}>
-        <Header />
-        <Main
-          onEditProfile={() => setEditProfilePopupOpen(true)}
-          onAddPlace={() => setAddPlacePopupOpen(true)}
-          onEditAvatar={() => setEditAvatarPopupOpen(true)}
-          onCardClick={setSelectedCard}
-          cards={cards}
-          onCardLike={handleCardLike}
-          onCardDelete={handleCardDelete} />
-        <Footer />
-        <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} onUpdateUser={handleUpdateUser} />
-        <EditAvatarPopup isOpen={isEditAvatarPopupOpen} onClose={closeAllPopups} onUpdateAvatar={handleUpdateAvatar} />
-        <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} onAddPlaceSubmit={handleAddPlaceSubmit} />
-        <PopupWithForm name="confirmation" title="Вы уверены?" button="Да">
-        </PopupWithForm>
-        <ImagePopup card={selectedCard} onClose={closeAllPopups} />
-      </CurrentUserContext.Provider>
-    </>
+    <CurrentUserContext.Provider value={currentUser}>
+      <Header loggedIn={loggedIn} setLoggedIn={setLoggedIn} email={email} />
+      <Routes>
+        <Route path="/" element={
+          <ProtectedRouteElement
+            element={Main}
+            loggedIn={loggedIn}
+            onEditProfile={() => setEditProfilePopupOpen(true)}
+            onAddPlace={() => setAddPlacePopupOpen(true)}
+            onEditAvatar={() => setEditAvatarPopupOpen(true)}
+            onCardClick={setSelectedCard}
+            cards={cards}
+            onCardLike={handleCardLike}
+            onCardDelete={handleCardDelete}
+          />} />
+        <Route path="/register" element={<Register setInfo={setInfo} />} />
+        <Route path="/login" element={<Login handleLogin={handleLogin} />} />
+      </Routes >
+      <Footer />
+      <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} onUpdateUser={handleUpdateUser} />
+      <EditAvatarPopup isOpen={isEditAvatarPopupOpen} onClose={closeAllPopups} onUpdateAvatar={handleUpdateAvatar} />
+      <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} onAddPlaceSubmit={handleAddPlaceSubmit} />
+      <PopupWithForm name="confirmation" title="Вы уверены?" button="Да">
+      </PopupWithForm>
+      <ImagePopup card={selectedCard} onClose={closeAllPopups} />
+      <InfoTooltip title={info} onClose={closeAllPopups} />
+    </CurrentUserContext.Provider>
   );
-}
-
+};
 export default App;
